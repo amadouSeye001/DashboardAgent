@@ -20,26 +20,30 @@ const HOST = '0.0.0.0'; // Important pour Render
 
 const app = express();
 
-// Configuration CORS
+// ✅ Configuration CORS unique et propre
 const corsOptions = {
-  origin: process.env.FRONTEND_URL || '*',
+  origin: [
+    process.env.FRONTEND_URL || 'http://localhost:5173', // URL du frontend (Vercel ou local)
+  ],
   credentials: true,
   optionsSuccessStatus: 200,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
 };
-
 app.use(cors(corsOptions));
+
+// ✅ Middleware de parsing JSON
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// Connexion à MongoDB
+// ✅ Vérification de la variable d'environnement MongoDB
 const uri = process.env.MONGODB_URI;
 if (!uri) {
   console.error('❌ MONGODB_URI n\'est pas défini dans les variables d\'environnement');
   process.exit(1);
 }
 
+// ✅ Connexion MongoDB
 const client = new MongoClient(uri, {
   maxPoolSize: 10,
   minPoolSize: 2,
@@ -50,7 +54,7 @@ const client = new MongoClient(uri, {
 let db;
 let isConnected = false;
 
-// Route de santé (health check)
+// ✅ Route de santé
 app.get('/health', (req, res) => {
   res.status(200).json({
     status: 'ok',
@@ -60,10 +64,10 @@ app.get('/health', (req, res) => {
   });
 });
 
-// Route de base
+// ✅ Route d'accueil (test rapide)
 app.get('/', (req, res) => {
   res.json({
-    message: 'API SenBank - Bienvenue',
+    message: 'API SenBank - Bienvenue 🚀',
     version: '1.0.0',
     endpoints: {
       health: '/health',
@@ -74,31 +78,26 @@ app.get('/', (req, res) => {
   });
 });
 
+// ✅ Fonction de connexion à MongoDB et démarrage du serveur
 async function connectToMongoDB() {
   try {
     console.log('🔄 Connexion à MongoDB...');
     await client.connect();
-    
-    // Vérifier la connexion
+
+    // Vérification de la connexion
     await client.db('admin').command({ ping: 1 });
-    
     db = client.db('senbank');
     isConnected = true;
     console.log('✅ Connecté à MongoDB');
 
-    // Créer l'index TTL pour la blacklist de tokens
+    // Index TTL pour la collection token_blacklist
     try {
       const collections = await db.listCollections({ name: 'token_blacklist' }).toArray();
-      
       if (collections.length > 0) {
         const indexes = await db.collection('token_blacklist').indexes();
         const ttlIndexExists = indexes.some(index => index.name === 'expiresAt_1');
-        
         if (!ttlIndexExists) {
-          await db.collection('token_blacklist').createIndex(
-            { expiresAt: 1 }, 
-            { expireAfterSeconds: 0 }
-          );
+          await db.collection('token_blacklist').createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 });
           console.log('✅ Index TTL créé pour token_blacklist');
         } else {
           console.log('ℹ️  Index TTL existe déjà pour token_blacklist');
@@ -108,63 +107,41 @@ async function connectToMongoDB() {
       console.error('⚠️  Erreur création index TTL token_blacklist:', indexError.message);
     }
 
-    // Initialiser les middlewares dépendants de la DB
+    // Vérifier la clé JWT
     const jwtSecret = process.env.JWT_SECRET;
     if (!jwtSecret) {
       console.error('❌ JWT_SECRET n\'est pas défini dans les variables d\'environnement');
       process.exit(1);
     }
 
+    // ✅ Initialiser les middlewares et routes
     const { authMiddleware, agentMiddleware } = createAuthMiddlewares(db, jwtSecret);
+    app.use('/', authRoutes(db, { authMiddleware, agentMiddleware }, jwtSecret));
+    app.use('/users', userRoutes(db, { authMiddleware, agentMiddleware }));
+    app.use('/transactions', transactionRoutes(db, { authMiddleware, agentMiddleware }));
 
-    // Monter les routes
-    const authRouter = authRoutes(db, { authMiddleware, agentMiddleware }, jwtSecret);
-    const usersRouter = userRoutes(db, { authMiddleware, agentMiddleware });
-    const transactionsRouter = transactionRoutes(db, { authMiddleware, agentMiddleware });
-
-    app.use('/', authRouter);
-    app.use('/users', usersRouter);
-    app.use('/transactions', transactionsRouter);
-
-    // Middlewares d'erreurs (doivent être en dernier)
+    // ✅ Middlewares d'erreurs (à la fin)
     app.use(notFound);
     app.use(errorHandler);
 
-    // Démarrer le serveur
+    // ✅ Démarrage du serveur
     const server = app.listen(PORT, HOST, () => {
       console.log('='.repeat(60));
       console.log(`🚀 Serveur démarré sur http://${HOST}:${PORT}`);
-      console.log(`📡 Environnement: ${process.env.NODE_ENV || 'development'}`);
       console.log(`🌐 URL publique: ${process.env.RENDER_EXTERNAL_URL || 'N/A'}`);
       console.log('='.repeat(60));
     });
 
-    // Gestion propre de l'arrêt du serveur
+    // ✅ Fermeture propre
     const gracefulShutdown = async (signal) => {
-      console.log(`\n⚠️  Signal ${signal} reçu, arrêt du serveur...`);
-      
+      console.log(`Signal ${signal} reçu, arrêt du serveur...`);
       server.close(async () => {
-        console.log('🔒 Fermeture des connexions HTTP...');
-        
-        try {
-          await client.close();
-          console.log('🔒 Fermeture de la connexion MongoDB...');
-          console.log('✅ Arrêt propre terminé');
-          process.exit(0);
-        } catch (err) {
-          console.error('❌ Erreur lors de l\'arrêt:', err);
-          process.exit(1);
-        }
+        await client.close();
+        console.log('Connexion MongoDB fermée. Arrêt propre terminé.');
+        process.exit(0);
       });
-
-      // Forcer l'arrêt après 10 secondes
-      setTimeout(() => {
-        console.error('⏱️  Arrêt forcé après timeout');
-        process.exit(1);
-      }, 10000);
     };
 
-    // Écouter les signaux d'arrêt
     process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
     process.on('SIGINT', () => gracefulShutdown('SIGINT'));
 
@@ -175,17 +152,14 @@ async function connectToMongoDB() {
   }
 }
 
-// Gestion des erreurs non capturées
-process.on('unhandledRejection', (reason, promise) => {
-  console.error('❌ Promesse rejetée non gérée:', reason);
-});
-
+// ✅ Gestion des erreurs globales
+process.on('unhandledRejection', (reason) => console.error('Promesse rejetée non gérée:', reason));
 process.on('uncaughtException', (error) => {
-  console.error('❌ Exception non capturée:', error);
+  console.error('Exception non capturée:', error);
   process.exit(1);
 });
 
-// Démarrer l'application
+// ✅ Lancer la connexion
 connectToMongoDB().catch(err => {
   console.error('❌ Échec du démarrage:', err);
   process.exit(1);
