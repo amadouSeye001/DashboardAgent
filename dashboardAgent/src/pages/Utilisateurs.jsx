@@ -73,18 +73,6 @@ export default function Utilisateurs() {
   const [bulkBlockStatus, setBulkBlockStatus] = useState(/** @type {boolean | null} */(null));
   const [bulkArchiveOpen, setBulkArchiveOpen] = useState(false);
 
-  // Suivre l'état d'ouverture du sidebar pour adapter la largeur
-  const [sidebarOpen, setSidebarOpen] = useState(() => {
-    try { return localStorage.getItem('sidebarOpen') === 'true'; } catch (err) { console.warn('Unable to read sidebar state from localStorage in Utilisateurs', err); return true; }
-  });
-  useEffect(() => {
-    const onSidebar = (e) => {
-      const open = !!(e?.detail?.open);
-      setSidebarOpen(open);
-    };
-    window.addEventListener('sidebar:state', onSidebar);
-    return () => window.removeEventListener('sidebar:state', onSidebar);
-  }, []);
 
   const handleAuthError = (err) => {
     if (err && (err.status === 401 || err.status === 403)) {

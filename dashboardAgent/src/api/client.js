@@ -5,7 +5,8 @@ const BASE_URL = String(RAW_BASE).replace(/\/+$/, ''); // remove trailing slash
 function getToken() {
   try {
     return localStorage.getItem('token') || '';
-  } catch (_) {
+  } catch (err) {
+    console.warn('Unable to read token from localStorage in client', err);
     return '';
   }
 }
