@@ -1,3 +1,4 @@
+
 // Simple API client for backend integration
 const RAW_BASE = (typeof import.meta !== 'undefined' && import.meta && /** @type {any} */(import.meta).env && /** @type {any} */(import.meta).env.VITE_API_URL) || 'http://localhost:3000';
 const BASE_URL = String(RAW_BASE).replace(/\/+$/, ''); // remove trailing slash
