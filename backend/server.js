@@ -20,16 +20,45 @@ const HOST = '0.0.0.0'; // Important pour Render
 
 const app = express();
 
-// ✅ Configuration CORS unique et propre
+// ✅ Configuration CORS robuste avec normalisation d'origine
+function normalizeOrigin(o) {
+  if (!o) return '';
+  try {
+    // Retire les slashs de fin et force le schéma/host/port uniquement
+    const u = new URL(o);
+    const normalized = `${u.protocol}//${u.host}`;
+    return normalized.replace(/\/+$/, '');
+  } catch {
+    return String(o).replace(/\/+$/, '');
+  }
+}
+
+const allowedOrigins = new Set([
+  normalizeOrigin(process.env.FRONTEND_ORIGIN || ''),
+  'https://minibank-agent.vercel.app',
+  'http://localhost:5173',
+].filter(Boolean));
+
 const corsOptions = {
-  origin: [
-    process.env.FRONTEND_URL || 'http://localhost:5173', // URL du frontend (Vercel ou local)
-  ],
+  origin: (origin, callback) => {
+    // Autoriser les requêtes sans en-tête Origin (ex: curl, health checks)
+    if (!origin) return callback(null, true);
+    const n = normalizeOrigin(origin);
+
+    // Autoriser même origine que l'URL Render si définie
+    const renderUrl = normalizeOrigin(process.env.RENDER_EXTERNAL_URL || '');
+    const isSameAsRender = renderUrl && n === renderUrl;
+
+    if (allowedOrigins.has(n) || isSameAsRender) {
+      return callback(null, true);
+    }
+    return callback(new Error(`CORS: Origin non autorisée: ${origin}`));
+  },
   credentials: true,
-  optionsSuccessStatus: 200,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
 };
+
 app.use(cors(corsOptions));
 
 // ✅ Middleware de parsing JSON
