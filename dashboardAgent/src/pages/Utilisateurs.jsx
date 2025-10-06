@@ -75,7 +75,7 @@ export default function Utilisateurs() {
 
   // Suivre l'état d'ouverture du sidebar pour adapter la largeur
   const [sidebarOpen, setSidebarOpen] = useState(() => {
-    try { return localStorage.getItem('sidebarOpen') === 'true'; } catch (_) { return true; }
+    try { return localStorage.getItem('sidebarOpen') === 'true'; } catch (err) { console.warn('Unable to read sidebar state from localStorage in Utilisateurs', err); return true; }
   });
   useEffect(() => {
     const onSidebar = (e) => {
@@ -227,7 +227,7 @@ export default function Utilisateurs() {
     try {
       const raw = localStorage.getItem('user');
       return raw ? JSON.parse(raw) : null;
-    } catch (_) { return null; }
+    } catch (err) { console.warn('Unable to read user from localStorage in Utilisateurs', err); return null; }
   }, []);
 
   const handleBlock = async (id, current) => {
@@ -307,7 +307,8 @@ export default function Utilisateurs() {
       const data = await toBase64(file);
       setEditForm((f) => (f ? { ...f, photoData: data } : f));
       setEditError('');
-    } catch (_) {
+    } catch (err) {
+      console.warn('Unable to read selected photo for user edit', err);
       setEditError("Impossible de lire l'image sélectionnée");
     }
   };
@@ -490,7 +491,8 @@ export default function Utilisateurs() {
       const data = await toBase64(file);
       setCreateForm((f) => ({ ...f, photoData: data }));
       setCreateError('');
-    } catch (_) {
+    } catch (err) {
+      console.warn('Unable to read selected photo for user creation', err);
       setCreateError("Impossible de lire l'image sélectionnée");
     }
   };

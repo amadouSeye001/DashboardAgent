@@ -86,7 +86,7 @@ export default function MenuAppBar() {
   try {
     const raw = localStorage.getItem('user');
     if (raw) currentUser = JSON.parse(raw);
-  } catch { }
+  } catch (err) { console.warn('Unable to read user from localStorage in body', err); }
   const displayName = [currentUser?.prenom, currentUser?.nom].filter(Boolean).join(' ') || 'Agent';
   const avatarProps = React.useMemo(() => {
     if (currentUser?.photo) {
@@ -200,7 +200,7 @@ export default function MenuAppBar() {
         try {
           const next = { ...(currentUser || {}), photo: data };
           localStorage.setItem('user', JSON.stringify(next));
-        } catch { }
+        } catch (err) { console.warn('Unable to persist updated user to localStorage after photo update', err); }
         setRefreshTick((t) => t + 1);
       }
     } catch (err) {
@@ -288,7 +288,7 @@ export default function MenuAppBar() {
       try {
         const next = { ...(currentUser || {}), ...payload };
         localStorage.setItem('user', JSON.stringify(next));
-      } catch { }
+      } catch (err) { console.warn('Unable to persist updated user to localStorage after edit', err); }
       setEditOpen(false);
     } catch (err) {
       console.error(err);
@@ -306,7 +306,7 @@ export default function MenuAppBar() {
       localStorage.removeItem('auth');
       localStorage.removeItem('token');
       localStorage.removeItem('user');
-    } catch { }
+    } catch (err) { console.warn('Unable to clear auth from localStorage on logout', err); }
     navigate('/login', { replace: true });
   };
 

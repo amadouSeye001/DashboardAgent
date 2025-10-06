@@ -37,7 +37,7 @@ export default function Dashboard() {
   try {
     const raw = localStorage.getItem('user');
     if (raw) currentUser = JSON.parse(raw);
-  } catch (_) { }
+  } catch (err) { console.warn('Unable to read user from localStorage in Dashboard', err); }
   const displayName = [currentUser?.prenom, currentUser?.nom].filter(Boolean).join(' ') || 'Agent';
 
   const navigate = useNavigate();
@@ -58,7 +58,7 @@ export default function Dashboard() {
 
   // Suivre l'état d'ouverture du sidebar pour adapter la largeur
   const [sidebarOpen, setSidebarOpen] = useState(() => {
-    try { return localStorage.getItem('sidebarOpen') === 'true'; } catch (_) { return true; }
+    try { return localStorage.getItem('sidebarOpen') === 'true'; } catch (err) { console.warn('Unable to read sidebar state from localStorage in Dashboard', err); return true; }
   });
   useEffect(() => {
     const onSidebar = (e) => {

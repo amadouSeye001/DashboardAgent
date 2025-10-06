@@ -15,7 +15,7 @@ export function ColorModeProvider({ children }) {
     try {
       const saved = localStorage.getItem('theme_mode');
       if (saved === 'light' || saved === 'dark' || saved === 'system') return saved;
-    } catch (_) {}
+    } catch (err) { console.warn('Unable to read theme_mode from localStorage', err); }
     return 'light';
   };
 
@@ -28,7 +28,7 @@ export function ColorModeProvider({ children }) {
   });
 
   useEffect(() => {
-    try { localStorage.setItem('theme_mode', mode); } catch (_) {}
+    try { localStorage.setItem('theme_mode', mode); } catch (err) { console.warn('Unable to persist theme_mode to localStorage', err); }
   }, [mode]);
 
   useEffect(() => {

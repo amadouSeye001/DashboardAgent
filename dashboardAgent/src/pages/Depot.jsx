@@ -54,7 +54,8 @@ export default function Depot() {
         setErrors((prev) => ({ ...prev, numCompte: "Le compte n'est pas un distributeur" }));
         return;
       }
-    } catch (_) {
+    } catch (err) {
+      console.warn('Unable to verify account for deposit', err);
       setErrors((prev) => ({ ...prev, numCompte: "Impossible de vérifier le compte pour l'instant" }));
       return;
     } finally { setChecking(false); }
@@ -73,6 +74,7 @@ export default function Depot() {
       setErrors({ numCompte: '', montant: '' });
       toast.success('Dépôt effectué avec succès');
     } catch (err) {
+      console.warn('Unable to create transaction for deposit', err);
       const msg = err?.message || "Erreur lors de la création de la transaction";
       toast.error(msg);
     }

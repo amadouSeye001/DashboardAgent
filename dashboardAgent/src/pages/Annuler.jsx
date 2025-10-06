@@ -97,7 +97,7 @@ export default function Annuler() {
     } finally {
       setCancelLoading(false);
       // Toujours resynchroniser pour éviter un état obsolète côté UI
-      try { await refreshTransactions(false); } catch {}
+      try { await refreshTransactions(false); } catch (err) { console.warn('Unable to refresh transactions after cancel', err); }
     }
   };
 

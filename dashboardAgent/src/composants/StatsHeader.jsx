@@ -12,7 +12,7 @@ export default function StatsHeader({ showStats = true, title = 'Bienvenue', sx 
       const n = [u?.prenom, u?.nom].filter(Boolean).join(' ');
       if (n) displayName = n;
     }
-  } catch (_) { /* noop */ }
+  } catch (err) { console.warn('Unable to read user from localStorage in StatsHeader', err); }
 
   /**
    * @typedef {Object} RawUser

@@ -50,7 +50,7 @@ export default function Login() {
         try {
           localStorage.setItem('token', res.token);
           localStorage.setItem('user', JSON.stringify(user));
-        } catch (_) { }
+        } catch (err) { console.warn('Unable to persist auth to localStorage after login', err); }
         navigate('/dashboard', { replace: true });
       } catch (err) {
         // Show backend-provided message when available (e.g., 403 bloqué)

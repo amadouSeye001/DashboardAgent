@@ -14,7 +14,7 @@ function App() {
     let authed = false;
     try {
       authed = Boolean(localStorage.getItem('token'));
-    } catch (_) { }
+    } catch (err) { console.warn('Unable to read token from localStorage', err); }
     return authed ? children : <Navigate to="/login" replace />;
   };
 

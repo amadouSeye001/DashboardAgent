@@ -34,13 +34,13 @@ export default function Sidebar({ drawerWidth = 180, onClose = () => { } }) {
   useEffect(() => {
     try {
       localStorage.setItem('sidebarOpen', 'true');
-    } catch (_) { }
+    } catch (err) { console.warn('Unable to persist sidebarOpen=true to localStorage', err); }
     window.dispatchEvent(new CustomEvent('sidebar:state', { detail: { open: true } }));
     return () => {
       // Lors du démontage, on indique qu'il n'est plus ouvert
       try {
         localStorage.setItem('sidebarOpen', 'false');
-      } catch (_) { }
+      } catch (err) { console.warn('Unable to persist sidebarOpen=false to localStorage on unmount', err); }
       window.dispatchEvent(new CustomEvent('sidebar:state', { detail: { open: false } }));
     };
   }, []);
@@ -48,7 +48,7 @@ export default function Sidebar({ drawerWidth = 180, onClose = () => { } }) {
   const handleSidebarClose = () => {
     try {
       localStorage.setItem('sidebarOpen', 'false');
-    } catch (_) { }
+    } catch (err) { console.warn('Unable to persist sidebarOpen=false to localStorage on close', err); }
     window.dispatchEvent(new CustomEvent('sidebar:state', { detail: { open: false } }));
     onClose();
   };
@@ -58,7 +58,7 @@ export default function Sidebar({ drawerWidth = 180, onClose = () => { } }) {
       <Box sx={{ p: 2, display: 'flex', alignItems: 'center', gap: 1, justifyContent: 'space-between' }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           <IconButton aria-label="fermer le menu" onClick={handleSidebarClose} size="small">
-            {theme.direction === 'ltr' ? <MenuIcon /> : <MenuIcon />}
+            <MenuIcon />
           </IconButton>
         </Box>
       </Box>
