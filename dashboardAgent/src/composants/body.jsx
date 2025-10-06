@@ -15,7 +15,7 @@ import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Stack, TextF
 import Snackbar from '@mui/material/Snackbar';
 import MuiAlert from '@mui/material/Alert';
 import { updateUser as apiUpdateUser, updateUserPassword as apiUpdateUserPassword } from '../api/client';
-import Sidebar from './sidebar';
+import Sidebar from './Sidebar';
 import StatsHeader from './StatsHeader';
 import logo from '../assets/react.svg';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
